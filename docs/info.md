@@ -9,12 +9,15 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+instantiates range finder for test run
 
 ## How to test
 
-Explain how to use your project
+- Provide 8-bit samples on data_in.
+- Pulse go to begin a collection.
+- assert finish to end
+
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+none for now

@@ -25,8 +25,8 @@ module tt_um_corin (
 
   wire reset  = ~rst_n;
 
-  wire        go     = uio_in[0];
-  wire        finish = uio_in[1];
+  wire        go     = uio_in[1];
+  wire        finish = uio_in[2];
   wire [7:0]  data_in = ui_in;
 
   wire [7:0]  range;
@@ -67,8 +67,8 @@ module RangeFinder
 
   enum logic [1:0] {IDLE, COLLECT, ERROR} cs, ns;
 
-  logic go_prev;
-  logic go_edge;
+  logic go_prev;       
+  logic go_edge;    
 
   assign go_edge = go & ~go_prev;
 
@@ -103,7 +103,7 @@ module RangeFinder
       min   <= '1;
       cs    <= IDLE;
       go_prev  <= 1'b0;
-    end
+    end 
     else begin
       go_prev <= go;
       if (go || (cs == COLLECT)) begin
@@ -117,6 +117,5 @@ module RangeFinder
   assign range = max - min;
 
 endmodule
-
 
 

@@ -74,24 +74,24 @@ module RangeFinder
 
   always_comb begin
     ns = cs;
-    error = 'd0;
+    error = 1'd0;
 
     case (cs)
       IDLE: begin
          ns = (finish) ? ERROR :
               (go_edge) ? COLLECT
               : IDLE;
-         error = (finish) ? 'd1 : 'd0;
+         error = (finish) ? 1'd1 : 1'd0;
       end
       COLLECT: begin
          ns = (go_edge) ? ERROR :
               (finish) ? IDLE:
               COLLECT;
-         error = (go_edge) ? 'd1 : 'd0;
+         error = (go_edge) ? 1'd1 : 1'd0;
       end
       ERROR: begin
          ns = (go_edge) ? COLLECT : ERROR;
-         error = 'd1;
+         error = 1'd1;
       end
     endcase
   end
@@ -99,8 +99,8 @@ module RangeFinder
 
   always_ff @(posedge clock, posedge reset) begin
     if (reset) begin
-      max   <= '0;
-      min   <= '1;
+      max   <= 16'd0;
+      min   <= 16'd1;
       cs    <= IDLE;
       go_prev  <= 1'b0;
     end 

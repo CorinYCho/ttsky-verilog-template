@@ -53,7 +53,7 @@ module tt_um_corin (
   assign uio_oe  = 8'b0000_0111;
 
   // wire _unused = &{ena, 1'b0};
-  wire _unused = &{ena, uio_in[7:6], uio_in[2:0], 1'b0};
+  wire _unused = &{ena, uio_in[7:6], 1'b0};
 
 
 endmodule
@@ -91,7 +91,7 @@ module bank_tracker #(
     logic [N_BANKS-1:0]                 open_flag;
     logic [N_BANKS-1:0][ROW_W-1:0]      open_row;
 
-
+    
     always_comb begin
         is_open     = open_flag[req_bank];
         is_hit      = is_open && (open_row[req_bank] == req_row);
@@ -136,8 +136,8 @@ endmodule : bank_tracker
 
 module fake_memory #(
     parameter int N_BANKS = 2,
-    parameter int N_ROWS  = 4,
-    parameter int N_COLS  = 4
+    parameter int N_ROWS  = 2,
+    parameter int N_COLS  = 2
 )(
     input  logic                        clk,
     input  logic                        rst,
@@ -156,13 +156,11 @@ module fake_memory #(
 
     // memory array
     logic [N_BANKS-1:0][N_ROWS-1:0][N_COLS-1:0][7:0] mem_arr;
-    wire _unused_mem = &{mem_row[$clog2(N_ROWS)], mem_col[$clog2(N_COLS)], 1'b0};
 
     // register to account for cycle delay
     logic        reg_valid;
     logic        reg_cmd;
-    logic [1:0]  reg_bank;
-    logic [2:0]  reg_row, reg_col;
+    logic [1:0]  reg_bank, reg_row, reg_col;
     logic [7:0]  reg_wdata;
 
     always_ff @(posedge clk or posedge rst) begin
@@ -187,9 +185,9 @@ module fake_memory #(
                 mem_resp_valid <= 1'b1;
                 mem_resp_rw    <= reg_cmd;
                 if (!reg_cmd) begin // read
-                    mem_resp_rdata <= mem_arr[reg_bank][reg_row[1:0]][reg_col[1:0]];
+                    mem_resp_rdata <= mem_arr[reg_bank][reg_row][reg_col];
                 end else begin // write
-                    mem_arr[reg_bank][reg_row[1:0]][reg_col[1:0]] <= reg_wdata;
+                    mem_arr[reg_bank][reg_row][reg_col] <= reg_wdata;
                     mem_resp_rdata                      <= 8'h00;
                 end
             end
@@ -220,8 +218,8 @@ module mem_ctrl (
     output logic        mem_valid,
     output logic        mem_cmd,        // read (0), write (1)
     output logic [1:0]  mem_bank,
-    output logic [2:0]  mem_row,
-    output logic [2:0]  mem_col,
+    output logic [1:0]  mem_row,
+    output logic [1:0]  mem_col,
     output logic [7:0]  mem_wdata,
     input  logic        mem_resp_valid,
     input  logic [7:0]  mem_resp_rdata,
@@ -249,10 +247,9 @@ module mem_ctrl (
     // register entry
     fifo_entry_t reg_entry;
 
-
+  
     logic is_open, is_hit, is_conflict;
     logic act_en, pre_en;
-    wire _unused_ctrl = &{is_open, reg_entry.valid, reg_entry.addr, 1'b0};
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) cur_state <= IDLE;
@@ -287,14 +284,14 @@ module mem_ctrl (
         case (cur_state)
             IDLE: begin
                 if (entry_valid) begin
-                    entry_accepted = 1'b1;  // pop
+                    entry_accepted = 1'b1;  // pop 
                     nxt_state      = CHECK;
                 end
             end
             CHECK: begin
                 resp_bz = 1'b1;
                 if (is_hit) begin
-                    nxt_state = RW;
+                    nxt_state = RW;         
                 end else if (is_conflict) begin
                     nxt_state = PRE;        // wrong row open, precharge first
                 end else begin
@@ -327,7 +324,7 @@ module mem_ctrl (
                     nxt_state  = IDLE;
                 end
             end
-            default: ; // unused states — no action
+
         endcase
     end
 
@@ -338,7 +335,7 @@ module mem_ctrl (
     ) u_bank_tracker (
         .clk        (clk),
         .rst        (rst),
-        .req_bank   (reg_entry.bank[0]),
+        .req_bank   (reg_entry.bank),
         .req_row    (reg_entry.row),
         .is_open    (is_open),
         .is_hit     (is_hit),
@@ -368,17 +365,16 @@ module mem_top (
     output logic        resp_rw
 );
 
-    // request queue connection to mem_ctrl
+    // request queue connection to mem_ctrl 
     fifo_entry_t entry_out;
     logic        entry_valid;
     logic        entry_accepted;
     logic        q_full;
 
-    wire _unused_top = &{q_full, 1'b0};
+    // mem_ctrl connection to fake_memory 
     logic        mem_valid;
     logic        mem_cmd;
-    logic [1:0]  mem_bank;
-    logic [2:0]  mem_row, mem_col;
+    logic [1:0]  mem_bank, mem_row, mem_col;
     logic [7:0]  mem_wdata;
     logic        mem_resp_valid;
     logic [7:0]  mem_resp_rdata;
@@ -420,8 +416,8 @@ module mem_top (
 
     fake_memory #(
         .N_BANKS (2),
-        .N_ROWS  (4),
-        .N_COLS  (4)
+        .N_ROWS  (2),
+        .N_COLS  (2)
     ) u_fake_mem (
         .clk            (clk),
         .rst            (rst),
@@ -456,7 +452,7 @@ module rq_fsm (
 
     // interacting with the fifo
     input  logic        queue_not_full,
-    output logic        entry_ready,
+    output logic        entry_ready,    
     output fifo_entry_t entry
 );
 
@@ -494,16 +490,16 @@ module rq_fsm (
                 end
             end
         end else begin
-            // No valid request
+            // No valid request 
             entry_ready      <= 1'b0;
         end
     end
 endmodule : rq_fsm
 
 
-// combinational address decoder that decodes the address into bank, row, and
+// combinational address decoder that decodes the address into bank, row, and 
 // col
-// for now, implemented with 2 banks, 4 rows, and 4 cols
+// for now, implemented with 2 banks, 4 rows, and 4 cols 
 
 module decode_addr (
     input  logic [7:0] addr,
@@ -512,11 +508,10 @@ module decode_addr (
     output logic [1:0] col
 );
     always_comb begin
-        bank = {1'b0, addr[7]};
-        row  = addr[6:5];
-        col  = addr[4:3];
+        bank = addr[7:6];
+        row  = addr[5:4];
+        col  = addr[3:2];
     end
-    wire _unused_dec = &{addr[2:0], 1'b0};
 
 endmodule : decode_addr
 
@@ -552,7 +547,7 @@ module request_queue #(
     logic [PTR_W-1:0] wr_ptr, rd_ptr;
     logic [PTR_W:0]   count;
 
-    assign q_full      = (count == (PTR_W+1)'(DEPTH));
+    assign q_full      = (count == $clog2(DEPTH)'(DEPTH));
     assign entry_valid = (count != '0);
     assign entry_out   = fifo_mem[rd_ptr];
 
@@ -586,13 +581,13 @@ module request_queue #(
             rd_ptr <= '0;
             count  <= '0;
         end else begin
-            // PUSH
+            // PUSH 
             if (entry_ready && !q_full) begin
                 fifo_mem[wr_ptr] <= assembled_entry;
                 wr_ptr           <= wr_ptr + 1'b1;
                 count            <= count + 1'b1;
             end
-            // POP
+            // POP 
             if (entry_accepted && entry_valid) begin
                 rd_ptr <= rd_ptr + 1'b1;
                 count  <= count - 1'b1;

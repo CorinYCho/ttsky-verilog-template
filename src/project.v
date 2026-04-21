@@ -53,7 +53,8 @@ module tt_um_corin (
   assign uio_oe  = 8'b0000_0111;
 
   // wire _unused = &{ena, 1'b0};
-  wire _unused = &{ena, uio_in[7:6], 1'b0};
+//   wire _unused = &{ena, uio_in[7:6], 1'b0};
+  wire _unused = &{ena, uio_in[7:6], uio_in[2:0], 1'b0};
 
 
 endmodule
@@ -77,8 +78,8 @@ module bank_tracker #(
     input  logic                        rst,
 
     // query
-    input  logic [$clog2(N_BANKS)-1:0]  req_bank,
-    input  logic [ROW_W-1:0]            req_row,
+    input  logic [1:0]  req_bank,
+    input  logic [1:0]            req_row,
     output logic                        is_open,
     output logic                        is_hit,
     output logic                        is_conflict,
@@ -251,6 +252,8 @@ module mem_ctrl (
     logic is_open, is_hit, is_conflict;
     logic act_en, pre_en;
 
+    wire _unused_ctrl = &{is_open, reg_entry.valid, reg_entry.addr, 1'b0};
+
     always_ff @(posedge clk or posedge rst) begin
         if (rst) cur_state <= IDLE;
         else     cur_state <= nxt_state;
@@ -324,7 +327,7 @@ module mem_ctrl (
                     nxt_state  = IDLE;
                 end
             end
-
+            default: ; // unused states — no action
         endcase
     end
 
@@ -370,6 +373,8 @@ module mem_top (
     logic        entry_valid;
     logic        entry_accepted;
     logic        q_full;
+
+    wire _unused_top = &{q_full, 1'b0};
 
     // mem_ctrl connection to fake_memory 
     logic        mem_valid;
@@ -547,7 +552,7 @@ module request_queue #(
     logic [PTR_W-1:0] wr_ptr, rd_ptr;
     logic [PTR_W:0]   count;
 
-    assign q_full      = (count == $clog2(DEPTH)'(DEPTH));
+    assign q_full      = (count == (PTR_W+1)'(DEPTH));
     assign entry_valid = (count != '0);
     assign entry_out   = fifo_mem[rd_ptr];
 

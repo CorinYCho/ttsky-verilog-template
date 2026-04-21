@@ -89,8 +89,8 @@ module bank_tracker #(
     input  logic                        pre_en    // precharge: close req_bank
 );
 
-    logic [N_BANKS-1:0]                 open_flag;
-    logic [N_BANKS-1:0][ROW_W-1:0]      open_row;
+    logic [1:0]                 open_flag;
+    logic [1:0][ROW_W-1:0]      open_row;
 
     
     always_comb begin
@@ -517,6 +517,8 @@ module decode_addr (
         row  = addr[5:4];
         col  = addr[3:2];
     end
+
+    wire _unused_dec = &{addr[1:0], 1'b0};
 
 endmodule : decode_addr
 

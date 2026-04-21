@@ -27,7 +27,7 @@ module tt_um_corin (
 
   wire        req_phase     = uio_in[3];
   wire        req_rw = uio_in[4];
-  wire        req_valid = uio_in[5]
+  wire        req_valid = uio_in[5];
   wire [7:0]  req_data = ui_in;
 
   wire [7:0]  resp_data;

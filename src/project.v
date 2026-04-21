@@ -68,7 +68,6 @@ typedef struct packed {
     logic [1:0]  col;
 } fifo_entry_t;
 
-`endif // MEM_CTRLER_SVH
 
 module bank_tracker #(
     parameter int N_BANKS = 2,

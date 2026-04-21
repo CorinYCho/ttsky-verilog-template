@@ -162,7 +162,7 @@ module fake_memory #(
     logic        reg_valid;
     logic        reg_cmd;
     logic [1:0]  reg_bank;
-    logic [1:0]  reg_row, reg_col;
+    logic [2:0]  reg_row, reg_col;
     logic [7:0]  reg_wdata;
 
     always_ff @(posedge clk or posedge rst) begin
@@ -187,9 +187,9 @@ module fake_memory #(
                 mem_resp_valid <= 1'b1;
                 mem_resp_rw    <= reg_cmd;
                 if (!reg_cmd) begin // read
-                    mem_resp_rdata <= mem_arr[reg_bank][reg_row][reg_col];
+                    mem_resp_rdata <= mem_arr[reg_bank][reg_row[1:0]][reg_col[1:0]];
                 end else begin // write
-                    mem_arr[reg_bank][reg_row][reg_col] <= reg_wdata;
+                    mem_arr[reg_bank][reg_row[1:0]][reg_col[1:0]] <= reg_wdata;
                     mem_resp_rdata                      <= 8'h00;
                 end
             end
@@ -220,8 +220,8 @@ module mem_ctrl (
     output logic        mem_valid,
     output logic        mem_cmd,        // read (0), write (1)
     output logic [1:0]  mem_bank,
-    output logic [1:0]  mem_row,
-    output logic [1:0]  mem_col,
+    output logic [2:0]  mem_row,
+    output logic [2:0]  mem_col,
     output logic [7:0]  mem_wdata,
     input  logic        mem_resp_valid,
     input  logic [7:0]  mem_resp_rdata,
@@ -378,7 +378,7 @@ module mem_top (
     logic        mem_valid;
     logic        mem_cmd;
     logic [1:0]  mem_bank;
-    logic [1:0]  mem_row, mem_col;
+    logic [2:0]  mem_row, mem_col;
     logic [7:0]  mem_wdata;
     logic        mem_resp_valid;
     logic [7:0]  mem_resp_rdata;

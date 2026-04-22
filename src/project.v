@@ -94,9 +94,9 @@ module bank_tracker #(
 
     
     always_comb begin
-        is_open     = open_flag[req_bank];
-        is_hit      = is_open && (open_row[req_bank] == req_row);
-        is_conflict = is_open && (open_row[req_bank] != req_row);
+        is_open     = open_flag[req_bank[0]];
+        is_hit      = is_open && (open_row[req_bank[0]] == req_row[0]);
+        is_conflict = is_open && (open_row[req_bank[0]] != req_row[0]);
     end
 
 
@@ -108,10 +108,10 @@ module bank_tracker #(
             end
         end else begin
             if (pre_en) begin
-                open_flag[req_bank] <= 1'b0;
+                open_flag[req_bank[0]] <= 1'b0;
             end
             if (act_en) begin
-                open_flag[req_bank] <= 1'b1;
+                open_flag[req_bank[0]] <= 1'b1;
                 open_row[req_bank]  <= req_row;
             end
         end
